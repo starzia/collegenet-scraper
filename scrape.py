@@ -1,5 +1,5 @@
 import urllib
-import time
+from time import sleep
 import re
 import random
 from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException, InvalidElementStateException
@@ -10,10 +10,6 @@ from selenium import webdriver
 
 #from web_util import wait, tree_from_string, css_select, Selector
 from typing import List
-
-
-def wait():
-    time.sleep(2 + random.uniform(0,3))
 
 
 def none_to_empty(obj):
@@ -56,7 +52,6 @@ class CollegeNet:
             expected_conditions.text_to_be_present_in_element((By.ID, "isc_PoolTreeWindow_3_0_valueCell0"), 'MS')
         )
 
-
     def __enter__(self):
         return self
 
@@ -64,12 +59,52 @@ class CollegeNet:
         self.selenium.quit()
 
     def get_page(self, url):
-        wait()
+        sleep(1)
         self.selenium.get(url)
+
+    def click_first_visible(self, selector, filter=None, sleep_time=1):
+        for e in self.selenium.find_elements_by_css_selector(selector):
+            if e.is_displayed():
+                if not filter or filter(e):
+                    e.click()
+                    sleep(sleep_time)
+                    return
+
+    def open_pool(self, pool_name="Computer Engineering: MS"):
+        for td in self.selenium.find_elements_by_css_selector('[eventproxy="isc_PoolTreeWindow_0"] td'):
+            if td.text == pool_name:
+                td.click()
+                sleep(5)
+                return
+
+    def check_first_visible(self):
+        self.click_first_visible('div[aria-hidden="false"] span.checkboxFalse')
+
+    def uncheck_first_visible(self):
+        self.click_first_visible('div[aria-hidden="false"] span.checkboxTrue')
+
+    def click_download(self):
+        self.click_actions()
+        self.click_pdf()
+
+    def click_actions(self):
+        self.click_first_visible('td.menuButton')
+
+    def click_pdf(self):
+        self.click_first_visible('td.menuTitleField nobr', filter=lambda e: e.text=="PDF")
+
+    def download_all(self):
+        self.check_first_visible()
+        self.click_download()
+        self.uncheck_first_visible()
+
+
 
 def main():
     # for some reason, running this in the IDE requires me to set the geckodriver path
-    with CollegeNet('/usr/local/bin/geckodriver') as scholar:
+    with CollegeNet('/usr/local/bin/geckodriver') as cn:
+        cn.open_pool("Electrical Engineering: MS")
+        cn.download_all()
         pass
 
 if __name__ == '__main__':
