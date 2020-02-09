@@ -81,6 +81,10 @@ class CollegeNet:
     def click_pdf(self):
         return self.click_first_visible('td.menuTitleField nobr', filter=lambda e: e.text=="PDF")
 
+    def sort_submission_date(self):
+        return self.click_first_visible('td.headerButton div div', filter=lambda e: e.text == "Submission Date",
+                                        sleep_time=5)
+
     def scroll_down_one(self):
         return self.click_first_visible('td.vScrollEnd')
 
@@ -91,13 +95,16 @@ class CollegeNet:
 
     def download_all(self):
         at_bottom = False
-        while not at_bottom:
+        while True:
             rows = 0
             while self.check_first_visible():
                 rows += 1
             self.click_download()
             while self.uncheck_first_visible(): pass
             sleep(5*60)  # wait for download to finish
+            if at_bottom:
+                break
+            # scroll down
             for i in range(rows):
                 if not self.scroll_down_one():
                     at_bottom = True
@@ -107,6 +114,7 @@ def main():
     # for some reason, running this in the IDE requires me to set the absolute geckodriver path
     with CollegeNet('/usr/local/bin/geckodriver') as cn:
         cn.open_pool("Electrical Engineering: MS")
+        cn.sort_submission_date()
         cn.download_all()
         pass
 
