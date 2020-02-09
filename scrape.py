@@ -39,7 +39,7 @@ class CollegeNet:
         #options.set_preference("browser.download.folderList", 2);
         #options.set_preference("browser.download.dir", ".")
         #options.set_preference("browser.download.useDownloadDir", True)
-        options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
+        options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/pdf;application/zip")
         options.set_preference("pdfjs.disabled", True)
 
         self.selenium = webdriver.Firefox(executable_path=executable_path, options=options)
@@ -70,13 +70,15 @@ class CollegeNet:
         sleep(1)
         self.selenium.get(url)
 
-    def click_first_visible(self, selector, filter=None, sleep_time=1):
+    def click_first_visible(self, selector, filter=None, sleep_time=1) -> bool:
+        """return true if something was found to click."""
         for e in self.selenium.find_elements_by_css_selector(selector):
             if e.is_displayed():
                 if not filter or filter(e):
                     e.click()
                     sleep(sleep_time)
-                    return
+                    return True
+        return False
 
     def open_pool(self, pool_name="Computer Engineering: MS"):
         for td in self.selenium.find_elements_by_css_selector('[eventproxy="isc_PoolTreeWindow_0"] td'):
@@ -86,26 +88,41 @@ class CollegeNet:
                 return
 
     def check_first_visible(self):
-        self.click_first_visible('div[aria-hidden="false"] span.checkboxFalse')
+        return self.click_first_visible('tr[role="listitem"] span.checkboxFalse')
 
     def uncheck_first_visible(self):
-        self.click_first_visible('div[aria-hidden="false"] span.checkboxTrue')
+        return self.click_first_visible('tr[role="listitem"] span.checkboxTrue')
 
     def click_download(self):
         self.click_actions()
         self.click_pdf()
 
     def click_actions(self):
-        self.click_first_visible('td.menuButton', filter=lambda e: e.text=="Actions")
+        return self.click_first_visible('td.menuButton', filter=lambda e: e.text=="Actions")
 
     def click_pdf(self):
-        self.click_first_visible('td.menuTitleField nobr', filter=lambda e: e.text=="PDF")
+        return self.click_first_visible('td.menuTitleField nobr', filter=lambda e: e.text=="PDF")
 
-    def download_all(self):
+    def scroll_down_one(self):
+        return self.click_first_visible('td.vScrollEnd')
+
+    def download_first(self):
         self.check_first_visible()
         self.click_download()
         self.uncheck_first_visible()
 
+    def download_all(self):
+        at_bottom = False
+        while not at_bottom:
+            rows = 0
+            while self.check_first_visible():
+                rows += 1
+            self.click_download()
+            while self.uncheck_first_visible(): pass
+            sleep(60)  # wait for download to finish
+            for i in range(rows):
+                if not self.scroll_down_one():
+                    at_bottom = True
 
 
 def main():
