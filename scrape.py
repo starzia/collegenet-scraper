@@ -1,35 +1,10 @@
-import urllib
 from time import sleep
-import re
-import random
-from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException, InvalidElementStateException
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium import webdriver
-
-#from web_util import wait, tree_from_string, css_select, Selector
-from typing import List
-
-
-def none_to_empty(obj):
-    return obj if obj else ''
-
-
-def empty_to_none(str):
-    return str if len(str) > 0 else None
-
-
-def parse_int(str) -> int:
-    return int(str) if str else 0
-
-
-def get_from_array(arr, idx):
-    if idx >= len(arr):
-        return None
-    else:
-        return empty_to_none(arr[idx])
 
 
 class CollegeNet:
@@ -66,19 +41,22 @@ class CollegeNet:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.selenium.quit()
 
-    def get_page(self, url):
-        sleep(1)
-        self.selenium.get(url)
-
     def click_first_visible(self, selector, filter=None, sleep_time=1) -> bool:
         """return true if something was found to click."""
-        for e in self.selenium.find_elements_by_css_selector(selector):
-            if e.is_displayed():
-                if not filter or filter(e):
-                    e.click()
+        while True:
+            for e in self.selenium.find_elements_by_css_selector(selector):
+                try:
+                    if e.is_displayed():
+                        if not filter or filter(e):
+                            e.click()
+                            sleep(sleep_time)
+                            return True
+                except WebDriverException:
+                    print("WARNING: selenium exception")
                     sleep(sleep_time)
-                    return True
-        return False
+                    # try again
+                    continue
+            return False
 
     def open_pool(self, pool_name="Computer Engineering: MS"):
         for td in self.selenium.find_elements_by_css_selector('[eventproxy="isc_PoolTreeWindow_0"] td'):
@@ -119,14 +97,14 @@ class CollegeNet:
                 rows += 1
             self.click_download()
             while self.uncheck_first_visible(): pass
-            sleep(60)  # wait for download to finish
+            sleep(5*60)  # wait for download to finish
             for i in range(rows):
                 if not self.scroll_down_one():
                     at_bottom = True
 
 
 def main():
-    # for some reason, running this in the IDE requires me to set the geckodriver path
+    # for some reason, running this in the IDE requires me to set the absolute geckodriver path
     with CollegeNet('/usr/local/bin/geckodriver') as cn:
         cn.open_pool("Electrical Engineering: MS")
         cn.download_all()
