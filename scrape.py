@@ -6,6 +6,7 @@ from selenium.common.exceptions import NoSuchElementException, ElementNotVisible
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options
 from selenium import webdriver
 
 #from web_util import wait, tree_from_string, css_select, Selector
@@ -32,16 +33,23 @@ def get_from_array(arr, idx):
 
 
 class CollegeNet:
-    def __init__(self, executable_path=None):
-        self.selenium = \
-            webdriver.Firefox(executable_path=executable_path) if executable_path else webdriver.Firefox()
+    def __init__(self, executable_path='geckodriver'):
+        # Firefox options to download pdfs without asking
+        options = Options()
+        #options.set_preference("browser.download.folderList", 2);
+        #options.set_preference("browser.download.dir", ".")
+        #options.set_preference("browser.download.useDownloadDir", True)
+        options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
+        options.set_preference("pdfjs.disabled", True)
+
+        self.selenium = webdriver.Firefox(executable_path=executable_path, options=options)
         # go to signin page
         self.selenium.get('https://admit.applyweb.com/admit/shibboleth/northwestern')
         # wait for human to log in
         WebDriverWait(self.selenium, 99999).until(
             expected_conditions.url_contains('https://admit.applyweb.com/admit/gwt'))
         # click "admit" button
-        WebDriverWait(self.selenium, 10).until(
+        WebDriverWait(self.selenium, 20).until(
             expected_conditions.presence_of_element_located((By.CSS_SELECTOR, "td.button"))
         )
         for button in self.selenium.find_elements_by_css_selector('td.button'):
@@ -88,7 +96,7 @@ class CollegeNet:
         self.click_pdf()
 
     def click_actions(self):
-        self.click_first_visible('td.menuButton')
+        self.click_first_visible('td.menuButton', filter=lambda e: e.text=="Actions")
 
     def click_pdf(self):
         self.click_first_visible('td.menuTitleField nobr', filter=lambda e: e.text=="PDF")
