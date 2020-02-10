@@ -23,5 +23,7 @@ RUNNING IT
 ----------
 If necessary, change the application pool string in main() function of scraper.py.  Then run:
 
-python3 scrape.py
+$ python3 scrape.py
 
+When the Firefox window appears, enter your login credentials and sign in.
+The rest of the process is totally automated.
