@@ -71,6 +71,10 @@ class CollegeNet:
     def uncheck_first_visible(self):
         return self.click_first_visible('tr[role="listitem"] span.checkboxTrue')
 
+    def uncheck_all(self):
+        self.click_first_visible('span.checkboxFalse')
+        self.click_first_visible('span.checkboxTrue')
+
     def click_download(self):
         self.click_actions()
         self.click_pdf()
@@ -100,20 +104,21 @@ class CollegeNet:
             while self.check_first_visible():
                 rows += 1
             self.click_download()
-            while self.uncheck_first_visible(): pass
+            self.uncheck_all()
             sleep(5*60)  # wait for download to finish
             if at_bottom:
                 break
             # scroll down
             for i in range(rows):
                 if not self.scroll_down_one():
+                    # TODO: this does not work yet.  Even if at bottom, scroll_down_one returns True
                     at_bottom = True
 
 
 def main():
     # for some reason, running this in the IDE requires me to set the absolute geckodriver path
     with CollegeNet('/usr/local/bin/geckodriver') as cn:
-        cn.open_pool("Electrical Engineering: MS")
+        cn.open_pool("Computer Engineering: MS")
         cn.sort_submission_date()
         cn.download_all()
         pass
