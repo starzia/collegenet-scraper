@@ -118,7 +118,8 @@ class CollegeNet:
 def main():
     # for some reason, running this in the IDE requires me to set the absolute geckodriver path
     with CollegeNet('/usr/local/bin/geckodriver') as cn:
-        cn.open_pool("Computer Engineering: MS")
+        cn.open_pool("Computer Science: MS")
+        sleep(10)
         cn.sort_submission_date()
         cn.download_all()
         pass
